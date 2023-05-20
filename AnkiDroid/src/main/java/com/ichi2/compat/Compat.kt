@@ -36,6 +36,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.SparseArray
 import android.view.View
+import android.view.Window
 import android.widget.TimePicker
 import androidx.annotation.IntDef
 import java.io.*
@@ -193,6 +194,10 @@ interface Compat {
     fun hasVideoThumbnail(path: String): Boolean
     fun requestAudioFocus(audioManager: AudioManager, audioFocusChangeListener: OnAudioFocusChangeListener, audioFocusRequest: AudioFocusRequest?)
     fun abandonAudioFocus(audioManager: AudioManager, audioFocusChangeListener: OnAudioFocusChangeListener, audioFocusRequest: AudioFocusRequest?)
+
+    fun setFullscreen(window: Window?)
+    fun hideSystemBars(window: Window?)
+    fun isImmersiveSystemUiVisible(window: Window?): Boolean
 
     @IntDef(
         flag = true,
