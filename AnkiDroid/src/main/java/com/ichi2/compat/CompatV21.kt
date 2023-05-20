@@ -43,6 +43,9 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.TimePicker
 import androidx.appcompat.widget.TooltipCompat
+import com.ichi2.anki.Reviewer.Companion.hideViewWithAnimation
+import com.ichi2.anki.Reviewer.Companion.showViewWithAnimation
+import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.utils.KotlinCleanup
 import timber.log.Timber
 import java.io.*
@@ -269,7 +272,13 @@ open class CompatV21 : Compat {
         window?.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
-    override fun hideSystemBars(window: Window?) {
+    override fun hideSystemBars(
+        window: Window?,
+        toolbar: View?,
+        answerButtons: View?,
+        topBar: View?,
+        fullScreenMode: FullScreenMode
+    ) {
         window?.decorView?.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE // | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION // temporarily disabled due to #5245
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -278,6 +287,29 @@ open class CompatV21 : Compat {
                 or View.SYSTEM_UI_FLAG_LOW_PROFILE
                 or View.SYSTEM_UI_FLAG_IMMERSIVE
             )
+        val decorView = window?.decorView
+        decorView?.setOnSystemUiVisibilityChangeListener { flags: Int ->
+            if (toolbar == null || topBar == null || answerButtons == null) {
+                return@setOnSystemUiVisibilityChangeListener
+            }
+            // Note that system bars will only be "visible" if none of the
+            // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
+            val visible = flags and View.SYSTEM_UI_FLAG_HIDE_NAVIGATION == 0
+            Timber.d("System UI visibility change. Visible: %b", visible)
+            if (visible) {
+                showViewWithAnimation(toolbar)
+                if (fullScreenMode == FullScreenMode.BUTTONS_AND_MENU) {
+                    showViewWithAnimation(topBar)
+                    showViewWithAnimation(answerButtons)
+                }
+            } else {
+                hideViewWithAnimation(toolbar)
+                if (fullScreenMode == FullScreenMode.FULLSCREEN_ALL_GONE) {
+                    hideViewWithAnimation(topBar)
+                    hideViewWithAnimation(answerButtons)
+                }
+            }
+        }
     }
 
     override fun isImmersiveSystemUiVisible(window: Window?): Boolean {

@@ -67,6 +67,7 @@ import com.ichi2.anki.reviewer.*
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getBackgroundColors
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getTextColors
 import com.ichi2.anki.reviewer.CardMarker.FlagDef
+import com.ichi2.anki.reviewer.FullScreenMode.Companion.fromPreference
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.isFullScreenReview
 import com.ichi2.anki.servicelayer.NoteService.isMarked
 import com.ichi2.anki.servicelayer.NoteService.toggleMark
@@ -1312,25 +1313,14 @@ open class Reviewer :
     }
 
     private fun setFullScreen(a: AbstractFlashcardViewer) {
-        CompatHelper.compat.hideSystemBars(window)
+        CompatHelper.compat.hideSystemBars(
+            a.window,
+            a.findViewById(R.id.toolbar),
+            a.findViewById(R.id.answer_options_layout),
+            a.findViewById(R.id.top_bar),
+            fromPreference(AnkiDroidApp.getSharedPrefs(a))
+        )
         a.window.statusBarColor = getColorFromAttr(a, R.attr.colorPrimaryDark)
-    }
-
-    private fun showViewWithAnimation(view: View) {
-        view.alpha = 0.0f
-        view.visibility = View.VISIBLE
-        view.animate().alpha(TRANSPARENCY).setDuration(ANIMATION_DURATION.toLong()).setListener(null)
-    }
-
-    private fun hideViewWithAnimation(view: View) {
-        view.animate()
-            .alpha(0f)
-            .setDuration(ANIMATION_DURATION.toLong())
-            .setListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    view.visibility = View.GONE
-                }
-            })
     }
 
     @Suppress("deprecation") // #9332: UI Visibility -> Insets
@@ -1667,5 +1657,21 @@ open class Reviewer :
         private const val REQUEST_AUDIO_PERMISSION = 0
         private const val ANIMATION_DURATION = 200
         private const val TRANSPARENCY = 0.90f
+        public fun showViewWithAnimation(view: View) {
+            view.alpha = 0.0f
+            view.visibility = View.VISIBLE
+            view.animate().alpha(TRANSPARENCY).setDuration(ANIMATION_DURATION.toLong())
+                .setListener(null)
+        }
+        public fun hideViewWithAnimation(view: View) {
+            view.animate()
+                .alpha(0f)
+                .setDuration(ANIMATION_DURATION.toLong())
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        view.visibility = View.GONE
+                    }
+                })
+        }
     }
 }

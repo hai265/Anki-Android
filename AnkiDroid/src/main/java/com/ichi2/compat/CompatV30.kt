@@ -16,9 +16,8 @@
 package com.ichi2.compat
 
 import android.annotation.TargetApi
-import android.view.Window
-import android.view.WindowInsets
-import android.view.WindowInsetsController
+import android.view.*
+import com.ichi2.anki.reviewer.FullScreenMode
 
 /** Implementation of [Compat] for SDK level 30 and higher. Check [Compat]'s for more detail.  */
 @TargetApi(30)
@@ -27,7 +26,13 @@ open class CompatV30 : CompatV29(), Compat {
         window?.decorView?.windowInsetsController?.hide(WindowInsets.Type.statusBars())
     }
 
-    override fun hideSystemBars(window: Window?) {
+    override fun hideSystemBars(
+        window: Window?,
+        toolbar: View?,
+        answerButtons: View?,
+        topBar: View?,
+        fullScreenMode: FullScreenMode
+    ) {
         window?.setDecorFitsSystemWindows(false)
         val controller = window?.insetsController
         controller?.let {
