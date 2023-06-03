@@ -43,6 +43,9 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.TimePicker
 import androidx.appcompat.widget.TooltipCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.ichi2.anki.Reviewer.Companion.hideViewWithAnimation
 import com.ichi2.anki.Reviewer.Companion.showViewWithAnimation
 import com.ichi2.anki.reviewer.FullScreenMode
@@ -279,36 +282,34 @@ open class CompatV21 : Compat {
         topBar: View?,
         fullScreenMode: FullScreenMode
     ) {
-        window?.decorView?.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE // | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION // temporarily disabled due to #5245
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LOW_PROFILE
-                or View.SYSTEM_UI_FLAG_IMMERSIVE
-            )
-        val decorView = window?.decorView
-        decorView?.setOnSystemUiVisibilityChangeListener { flags: Int ->
+        if (window == null) {
+            return
+        }
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        }
+
+        window.decorView.setOnApplyWindowInsetsListener { _, windowInsets ->
             if (toolbar == null || topBar == null || answerButtons == null) {
-                return@setOnSystemUiVisibilityChangeListener
+                return@setOnApplyWindowInsetsListener windowInsets
             }
-            // Note that system bars will only be "visible" if none of the
-            // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
-            val visible = flags and View.SYSTEM_UI_FLAG_HIDE_NAVIGATION == 0
-            Timber.d("System UI visibility change. Visible: %b", visible)
+            val visible = WindowInsetsCompat.toWindowInsetsCompat(windowInsets).isVisible(WindowInsetsCompat.Type.systemBars())
             if (visible) {
                 showViewWithAnimation(toolbar)
+                WindowCompat.setDecorFitsSystemWindows(window, true)
                 if (fullScreenMode == FullScreenMode.BUTTONS_AND_MENU) {
                     showViewWithAnimation(topBar)
                     showViewWithAnimation(answerButtons)
                 }
             } else {
                 hideViewWithAnimation(toolbar)
+                WindowCompat.setDecorFitsSystemWindows(window, false)
                 if (fullScreenMode == FullScreenMode.FULLSCREEN_ALL_GONE) {
                     hideViewWithAnimation(topBar)
                     hideViewWithAnimation(answerButtons)
                 }
             }
+            return@setOnApplyWindowInsetsListener windowInsets
         }
     }
 
