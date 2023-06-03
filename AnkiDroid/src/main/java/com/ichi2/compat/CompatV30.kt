@@ -17,6 +17,7 @@ package com.ichi2.compat
 
 import android.annotation.TargetApi
 import android.view.*
+import com.ichi2.anki.Reviewer
 import com.ichi2.anki.reviewer.FullScreenMode
 
 /** Implementation of [Compat] for SDK level 30 and higher. Check [Compat]'s for more detail.  */
@@ -37,8 +38,27 @@ open class CompatV30 : CompatV29(), Compat {
         val controller = window?.insetsController
         controller?.let {
             controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-            controller.systemBarsBehavior =
-                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+
+        window?.decorView?.setOnApplyWindowInsetsListener { _, windowInsets ->
+            if (toolbar == null || topBar == null || answerButtons == null) {
+                return@setOnApplyWindowInsetsListener windowInsets
+            }
+            val visible = windowInsets.isVisible(WindowInsets.Type.navigationBars())
+            if (visible) {
+                Reviewer.showViewWithAnimation(toolbar)
+                if (fullScreenMode == FullScreenMode.BUTTONS_AND_MENU) {
+                    Reviewer.showViewWithAnimation(topBar)
+                    Reviewer.showViewWithAnimation(answerButtons)
+                }
+            } else {
+                Reviewer.hideViewWithAnimation(toolbar)
+                if (fullScreenMode == FullScreenMode.FULLSCREEN_ALL_GONE) {
+                    Reviewer.hideViewWithAnimation(topBar)
+                    Reviewer.hideViewWithAnimation(answerButtons)
+                }
+            }
+            return@setOnApplyWindowInsetsListener windowInsets
         }
     }
 
