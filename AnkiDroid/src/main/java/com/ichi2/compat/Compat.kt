@@ -36,8 +36,10 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.SparseArray
 import android.view.View
+import android.view.Window
 import android.widget.TimePicker
 import androidx.annotation.IntDef
+import com.ichi2.anki.reviewer.FullScreenMode
 import java.io.*
 import java.util.*
 
@@ -193,6 +195,10 @@ interface Compat {
     fun hasVideoThumbnail(path: String): Boolean
     fun requestAudioFocus(audioManager: AudioManager, audioFocusChangeListener: OnAudioFocusChangeListener, audioFocusRequest: AudioFocusRequest?)
     fun abandonAudioFocus(audioManager: AudioManager, audioFocusChangeListener: OnAudioFocusChangeListener, audioFocusRequest: AudioFocusRequest?)
+
+    fun setFullscreen(window: Window?)
+    fun hideSystemBars(window: Window?, toolbar: View?, answerButtons: View?, topBar: View?, fullScreenMode: FullScreenMode)
+    fun isImmersiveSystemUiVisible(window: Window?): Boolean
 
     @IntDef(
         flag = true,

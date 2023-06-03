@@ -39,8 +39,16 @@ import android.os.Vibrator
 import android.provider.MediaStore
 import android.util.SparseArray
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import android.widget.TimePicker
 import androidx.appcompat.widget.TooltipCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.ichi2.anki.Reviewer.Companion.hideViewWithAnimation
+import com.ichi2.anki.Reviewer.Companion.showViewWithAnimation
+import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.utils.KotlinCleanup
 import timber.log.Timber
 import java.io.*
@@ -261,6 +269,52 @@ open class CompatV21 : Compat {
     @SuppressLint("WrongConstant")
     override fun getImmutableActivityIntent(context: Context, requestCode: Int, intent: Intent, flags: Int): PendingIntent {
         return PendingIntent.getActivity(context, requestCode, intent, flags or FLAG_IMMUTABLE)
+    }
+
+    override fun setFullscreen(window: Window?) {
+        window?.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    }
+
+    override fun hideSystemBars(
+        window: Window?,
+        toolbar: View?,
+        answerButtons: View?,
+        topBar: View?,
+        fullScreenMode: FullScreenMode
+    ) {
+        if (window == null) {
+            return
+        }
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        }
+
+        window.decorView.setOnApplyWindowInsetsListener { _, windowInsets ->
+            if (toolbar == null || topBar == null || answerButtons == null) {
+                return@setOnApplyWindowInsetsListener windowInsets
+            }
+            val visible = WindowInsetsCompat.toWindowInsetsCompat(windowInsets).isVisible(WindowInsetsCompat.Type.systemBars())
+            if (visible) {
+                showViewWithAnimation(toolbar)
+                WindowCompat.setDecorFitsSystemWindows(window, true)
+                if (fullScreenMode == FullScreenMode.BUTTONS_AND_MENU) {
+                    showViewWithAnimation(topBar)
+                    showViewWithAnimation(answerButtons)
+                }
+            } else {
+                hideViewWithAnimation(toolbar)
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                if (fullScreenMode == FullScreenMode.FULLSCREEN_ALL_GONE) {
+                    hideViewWithAnimation(topBar)
+                    hideViewWithAnimation(answerButtons)
+                }
+            }
+            return@setOnApplyWindowInsetsListener windowInsets
+        }
+    }
+
+    override fun isImmersiveSystemUiVisible(window: Window?): Boolean {
+        return window?.decorView?.systemUiVisibility?.and(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0
     }
 
     @SuppressLint("WrongConstant")
